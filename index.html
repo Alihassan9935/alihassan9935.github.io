@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lifebox — Câmeras ao Vivo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #080810; color: #ccc; min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; text-align: center;
+    }
+    .mark { color: #f90; font-size: 44px; letter-spacing: 6px; margin-bottom: 6px; }
+    h1 { font-size: 22px; font-weight: 600; color: #eee; letter-spacing: 1px; }
+    p.sub { color: #777; font-size: 13px; margin-top: 8px; max-width: 460px; line-height: 1.5; }
+    a.go {
+      display: inline-block; margin-top: 26px; padding: 14px 34px;
+      background: #f90; color: #111; font-weight: 700; font-size: 15px;
+      letter-spacing: 1px; text-decoration: none; border-radius: 4px;
+      transition: background .15s;
+    }
+    a.go:hover { background: #ffb300; }
+    a.go.disabled { background: #2a2a3a; color: #666; pointer-events: none; }
+    .status { margin-top: 14px; font-size: 12px; color: #555; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f33; margin-right: 6px; vertical-align: middle; }
+    .dot.ok { background: #0f0; box-shadow: 0 0 6px #0f0; }
+    img.qr { margin-top: 26px; width: 150px; height: 150px; border: 8px solid #14141f; border-radius: 6px; }
+    footer { position: fixed; bottom: 10px; width: 100%; font-size: 10px; color: #3a3a4a; }
+  </style>
+</head>
+<body>
+  <div class="mark">&#x2B21;</div>
+  <h1>LIFEBOX &mdash; MONITORAMENTO INTELIGENTE</h1>
+  <p class="sub">
+    Projeto de vigil&acirc;ncia com intelig&ecirc;ncia artificial para a Lifebox Burger Campinas:
+    48 c&acirc;meras em 3 NVRs Intelbras transmitindo em tempo real, com detecc&atilde;o de pessoas e alertas.
+    Esta p&aacute;gina &eacute; a porta de entrada fixa do painel ao vivo.
+  </p>
+  <a class="go disabled" id="btn" href="#">ABRIR PAINEL AO VIVO</a>
+  <div class="status"><span class="dot" id="dot"></span><span id="txt">verificando sinal&hellip;</span></div>
+  <img class="qr" alt="QR Code" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fmatheusschelle.github.io%2F">
+  <footer>Lifebox Maquete &middot; atualizada automaticamente</footer>
+
+  <script>
+    const btn = document.getElementById('btn');
+    const dot = document.getElementById('dot');
+    const txt = document.getElementById('txt');
+    async function ping(base) {
+      try {
+        await fetch(base + '/api/status', { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(6000) });
+        return true; // resposta opaca = túnel vivo
+      } catch (e) { return false; }
+    }
+    async function init() {
+      let base = null;
+      try {
+        const r = await fetch('cameras.json', { cache: 'no-store' });
+        base = (await r.json()).base;
+      } catch (e) {}
+      if (!base) { txt.textContent = 'painel desativado'; return; }
+      const alive = await ping(base);
+      if (alive) {
+        btn.href = base + '/cameras.html';
+        btn.classList.remove('disabled');
+        dot.classList.add('ok');
+        txt.textContent = 'painel online — abra agora';
+      } else {
+        txt.textContent = 'reconectando — tente novamente em instantes';
+      }
+    }
+    init();
+    setInterval(init, 30000);
+  </script>
+</body>
+</html>
